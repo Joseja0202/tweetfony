@@ -107,13 +107,100 @@ class ApiController extends AbstractController
 
 
     function index() {
-       $result = array();
-       $result['users'] = $this->generateUrl('api_get_users',array(),
-                                             UrlGeneratorInterface::ABSOLUTE_URL);
-       $result['tweets'] = $this->generateUrl('api_get_tweets',array(),
-                                             UrlGeneratorInterface::ABSOLUTE_URL);
-       return new JsonResponse($result);
-     }
+    $result = array();
+    $result['users'] = $this->generateUrl('api_get_users',array(),
+        UrlGeneratorInterface::ABSOLUTE_URL);
+    $result['tweets'] = $this->generateUrl('api_get_tweets',array(),
+        UrlGeneratorInterface::ABSOLUTE_URL);
+    return new JsonResponse($result);
+    }
+
+
+
+    function postTweetfonyUser(Request $request) {
+        $entityManager = $this->getDoctrine()->getManager();
+        $user = $entityManager->getRepository(User::class)->findOneBy(['userName' => $request->request->get("userName")]);
+        if ($user) {
+        return new JsonResponse([
+            'error' => 'UserName already exists'
+        ], 409);
+        }
+        $user = new User();
+        $user->setName($request->request->get("name"));
+        $user->setUserName($request->request->get("userName"));
+        $entityManager->persist($user);
+        $entityManager->flush();
+        return new JsonResponse($this->generateUrl('api_get_user', [
+            'id' => $user->getId(),
+        ], UrlGeneratorInterface::ABSOLUTE_URL), 201);
+    }
+
+
+    function postTweet(Request $request) {
+        $entityManager = $this->getDoctrine()->getManager();
+        $user = $entityManager->getRepository(User::class)->find($request->request->get("userId"));
+        if ($user == null) {
+        return new JsonResponse([
+            'error' => 'Username already exists'
+        ], 409);
+        }
+
+        $tweet = new Tweet();
+        $tweet->setText($request->request->get("text"));
+        $tweet->setDate(new \DateTime());
+        $tweet->setUser($user);
+        $entityManager->persist($tweet);
+        $entityManager->flush();
+        return new JsonResponse($this->generateUrl('api_get_tweet', [
+            'id' => $tweet->getId(),
+        ], UrlGeneratorInterface::ABSOLUTE_URL), 201);
+
+    }
+
+
+    function putTweetfonyUser(Request $request, $id) {
+        $entityManager = $this->getDoctrine()->getManager();
+        $user = $entityManager->getRepository(User::class)->find($id);
+        if ($user == null) {
+          return new JsonResponse([
+            'error' => 'User not found'
+          ], 404);
+        }
+        if ($user->getUserName() != $request->request->get("userName")) {
+            $user2 = $entityManager->getRepository(User::class)->findOneBy(['userName' => $request->request->get("userName")]);
+            if ($user2) {
+            return new JsonResponse([
+                'error' => 'UserName already in use'
+            ], 409);
+            }
+        }
+        $user->setName($request->request->get("name"));
+        $user->setUserName($request->request->get("userName"));
+        $entityManager->flush();
+        return new JsonResponse($this->generateUrl('api_get_user', [
+            'id' => $user->getId(),
+          ], UrlGeneratorInterface::ABSOLUTE_URL));
+      }
+
+
+
+      function putTweet(Request $request, $id) {
+        $entityManager = $this->getDoctrine()->getManager();
+        $tweet = $entityManager->getRepository(Tweet::class)->find($id);
+        if ($tweet == null) {
+          return new JsonResponse([
+            'error' => 'Tweet not found'
+          ], 404);
+        }
+
+        $tweet->setText($request->request->get("text"));
+        $tweet->setDate(new \DateTime());
+        $entityManager->flush();
+
+        return new JsonResponse($this->generateUrl('api_get_tweet', [
+            'id' => $tweet->getId(),
+          ], UrlGeneratorInterface::ABSOLUTE_URL));
+      }
 
     
 
