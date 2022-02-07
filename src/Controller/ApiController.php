@@ -76,7 +76,7 @@ class ApiController extends AbstractController
     return new JsonResponse($result);
     }
 
-
+    //function get Tweet
     function getTweets(){
 
     $entityManager = $this->getDoctrine()->getManager();
@@ -90,6 +90,7 @@ class ApiController extends AbstractController
     return new JsonResponse($listaTweets);
     }
 
+    //function get User
     function getUsers(){
 
         $entityManager = $this->getDoctrine()->getManager();
@@ -105,7 +106,7 @@ class ApiController extends AbstractController
 
 
 
-
+    //function index, you can see all users and tweets
     function index() {
     $result = array();
     $result['users'] = $this->generateUrl('api_get_users',array(),
@@ -116,7 +117,7 @@ class ApiController extends AbstractController
     }
 
 
-
+    //function post User
     function postTweetfonyUser(Request $request) {
         $entityManager = $this->getDoctrine()->getManager();
         $user = $entityManager->getRepository(User::class)->findOneBy(['userName' => $request->request->get("userName")]);
@@ -136,13 +137,14 @@ class ApiController extends AbstractController
     }
 
 
+    //function post Tweet
     function postTweet(Request $request) {
         $entityManager = $this->getDoctrine()->getManager();
         $user = $entityManager->getRepository(User::class)->find($request->request->get("userId"));
         if ($user == null) {
         return new JsonResponse([
-            'error' => 'Username already exists'
-        ], 409);
+            'error' => 'User not found'
+        ], 404);
         }
 
         $tweet = new Tweet();
@@ -157,7 +159,7 @@ class ApiController extends AbstractController
 
     }
 
-
+    //function put User
     function putTweetfonyUser(Request $request, $id) {
         $entityManager = $this->getDoctrine()->getManager();
         $user = $entityManager->getRepository(User::class)->find($id);
@@ -183,7 +185,7 @@ class ApiController extends AbstractController
       }
 
 
-
+    //function put Tweet
       function putTweet(Request $request, $id) {
         $entityManager = $this->getDoctrine()->getManager();
         $tweet = $entityManager->getRepository(Tweet::class)->find($id);
@@ -201,6 +203,38 @@ class ApiController extends AbstractController
             'id' => $tweet->getId(),
           ], UrlGeneratorInterface::ABSOLUTE_URL));
       }
+
+      //function delete User
+    function deleteTweetfonyUser($id) {
+        $entityManager = $this->getDoctrine()->getManager();
+        $user = $entityManager->getRepository(User::class)->find($id);
+        if ($user == null) {
+          return new JsonResponse([
+            'error' => 'User not found'
+          ], 404);
+        }
+
+        $entityManager->remove($user);
+        $entityManager->flush();
+
+        return new JsonResponse(null,204);
+    }
+
+    //function delete Tweet
+    function deleteTweet($id) {
+        $entityManager = $this->getDoctrine()->getManager();
+        $tweet = $entityManager->getRepository(Tweet::class)->find($id);
+        if ($tweet == null) {
+          return new JsonResponse([
+            'error' => 'Tweet not found'
+          ], 404);
+        }
+
+        $entityManager->remove($tweet);
+        $entityManager->flush();
+
+        return new JsonResponse(null,204);
+    }
 
     
 
